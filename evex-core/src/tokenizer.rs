@@ -1,55 +1,53 @@
-use crate::token::Token;
-use crate::invalid_token_error::InvalidTokenError;
+use crate::tokens::{InputToken, TokenContentType};
 use crate::parsing_helpers::*;
+use crate::errors::tokenization_errors::InvalidTokenError;
 
-pub fn tokenize(input: &str) -> Result<Vec<Token>, InvalidTokenError> {
-    let mut result: Vec<Token> = Vec::new();
-
+pub fn tokenize(input: &str, mut callback: impl FnMut(InputToken)) -> Result<(),
+    InvalidTokenError> {
     let input_chars: Vec<char> = input.chars().collect();
     let mut i = 0;
-    let length = input_chars.len();
+    let length = input_chars.len() as i32;
     while i < length {
         let char = input_chars[i];
 
         if is_digit(&char) {
             let number_string = process_digit(&input_chars, &mut i);
-            let token = Token::new(&number_string);
-            result.push(token);
+            callback(InputToken::new(&number_string, TokenContentType::Numeric, i));
         } else if char.is_alphabetic() {
             let alphanumeric_string = process_alpha_char(&input_chars, &mut i);
-            let token = Token::new(&alphanumeric_string);
-            result.push(token);
+            callback(InputToken::new(&alphanumeric_string, TokenContentType::Alphabetic, i));
         } else if is_operator(&char) {
             let operator_string = process_operator(&input_chars, &mut i);
-            let token = Token::new(&operator_string);
-            result.push(token);
-        } else if is_opening_bracket(&char) || is_closing_bracket(&char) || is_separator(&char) {
-            let token = Token::new(&char.to_string());
-            result.push(token);
+            callback(InputToken::new(&operator_string, TokenContentType::Operator, i));
+        } else if is_opening_bracket(&char) {
+            callback(InputToken::new(&char.to_string(), TokenContentType::OpeningBracket, i));
+        } else if is_closing_bracket(&char) {
+            callback(InputToken::new(&char.to_string(), TokenContentType::ClosingBracket, i));
+        } else if is_separator(&char) {
+            callback(InputToken::new(&char.to_string(), TokenContentType::Separator, i));
         } else if !char.is_whitespace() {
-            let err = InvalidTokenError::new(i as i32, char);
+            let err = InvalidTokenError::new(i, char);
             return Err(err);
         }
 
         i += 1;
     }
 
-    return Ok(result);
+    return Ok(());
 }
 
-fn process_digit(input_chars: &Vec<char>, outer_index: &mut usize) -> String {
+fn process_digit(input_chars: &Vec<char>, outer_index: &mut i32) -> String {
     let mut index = *outer_index;
-
     let mut result = String::new();
+    let length = input_chars.len() as i32;
 
     let mut char: char = input_chars[index];
-
     while is_digit_or_dot(&char) {
         result.push(char);
 
         index += 1;
 
-        if index == input_chars.len() {
+        if index == length {
             break;
         }
 
@@ -83,10 +81,10 @@ fn process_digit(input_chars: &Vec<char>, outer_index: &mut usize) -> String {
     return result;
 }
 
-fn process_alpha_char(input_chars: &Vec<char>, outer_index: &mut usize) -> String {
+fn process_alpha_char(input_chars: &Vec<char>, outer_index: &mut i32) -> String {
     let mut index = *outer_index;
-
     let mut result = String::new();
+    let length = input_chars.len() as i32;
 
     let mut char: char = input_chars[index];
     while char.is_alphanumeric() {
@@ -94,7 +92,7 @@ fn process_alpha_char(input_chars: &Vec<char>, outer_index: &mut usize) -> Strin
 
         index += 1;
 
-        if index == input_chars.len() {
+        if index == length {
             break;
         }
 
@@ -108,8 +106,9 @@ fn process_alpha_char(input_chars: &Vec<char>, outer_index: &mut usize) -> Strin
     return result;
 }
 
-fn process_operator(input_chars: &Vec<char>, outer_index: &mut usize) -> String {
+fn process_operator(input_chars: &Vec<char>, outer_index: &mut i32) -> String {
     let mut index = *outer_index;
+    let length = input_chars.len() as i32;
 
     let mut next_char: char = input_chars[index];
     return if is_factorial(&next_char) {
@@ -120,7 +119,7 @@ fn process_operator(input_chars: &Vec<char>, outer_index: &mut usize) -> String 
 
             index = index + 1;
 
-            if index == input_chars.len() {
+            if index == length {
                 break;
             }
 

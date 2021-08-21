@@ -1,5 +1,4 @@
 use std::{error::Error, fmt};
-use crate::tokens::ValueToken;
 
 pub trait InternalError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -21,23 +20,28 @@ impl fmt::Display for dyn InternalError {
 
 impl Error for dyn InternalError {}
 
-pub struct ValueStringParsingTokenError<E: Error> {
+pub struct ValueStringParsingError<E: Error> {
     caused_by: String,
-    original_error: Option(E),
+    original_error: Option<E>,
 }
 
-impl ValueStringParsingTokenError<E> {
-    pub fn new(s: &str, original_error: E) -> ValueStringParsingTokenError<E> {
-        return ValueStringParsingTokenError {
+impl<E: Error> ValueStringParsingError<E> {
+    pub fn new(s: &str, original_error: Option<E>) -> ValueStringParsingError<E> {
+        return ValueStringParsingError {
             caused_by: String::from(s),
-            original_error: Some(original_error),
+            original_error,
         };
     }
 }
 
-impl InternalError for ValueStringParsingTokenError<E> {
+impl<E: Error> InternalError for ValueStringParsingError<E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        return write!(f, "unable to process \"{}\" string as a value token due to the next error: {}", self.caused_by, self.original_error);
+        let original_error_text = match &self.original_error {
+            Some(error) => format!(" due to an error: {}", error),
+            None => String::new(),
+        };
+
+        return write!(f, "unable to process \"{}\" string as a value token{}",  self.caused_by, original_error_text);
     }
 }
 
@@ -56,5 +60,23 @@ impl BracketParsingError {
 impl InternalError for BracketParsingError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         return write!(f, "unable to process \"{}\" string as a bracket token", self.caused_by);
+    }
+}
+
+pub struct OperatorParsingError {
+    caused_by: String,
+}
+
+impl OperatorParsingError {
+    pub fn new(s: &str) -> OperatorParsingError {
+        return OperatorParsingError {
+            caused_by: String::from(s),
+        };
+    }
+}
+
+impl InternalError for OperatorParsingError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        return write!(f, "unable to process \"{}\" string as an operator token", self.caused_by);
     }
 }

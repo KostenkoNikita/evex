@@ -1,29 +1,29 @@
 use crate::tokens::input_token::InputToken;
+use crate::math::types::Value;
+use crate::data::definitions::OperatorDefinition;
 
-pub enum OperatorType<T> {
-    Unary(fn(T) -> T),
-    Binary(fn(T, T) -> T),
-}
-
-pub enum OperatorAssociativity {
-    Left,
-    Right,
-}
-
-pub struct OperatorToken<T> {
+pub struct OperatorToken<'a, T: Value> {
     content: String,
-    original_position: i32,
-    priority: u8,
-    operator_type: OperatorType<T>,
-    associativity: OperatorAssociativity,
+    position: i32,
+    definition: &'a OperatorDefinition<T>,
 }
 
-impl InputToken for OperatorToken<T> {
+impl<T: Value> OperatorToken<'_, T> {
+    pub fn new<'a>(s: &str, position: i32, definition: &'a OperatorDefinition<T>) -> OperatorToken<'a, T> {
+        return OperatorToken {
+            content: String::from(s),
+            position,
+            definition,
+        };
+    }
+}
+
+impl<T: Value> InputToken for OperatorToken<'_, T> {
     fn get_content(&self) -> &str {
         return &self.content;
     }
 
-    fn get_original_position(&self) -> i32 {
-        return self.original_position;
+    fn get_position(&self) -> i32 {
+        return self.position;
     }
 }

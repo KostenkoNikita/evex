@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter, Result as IoResult};
 pub trait InputToken {
     fn get_content(&self) -> &str;
 
-    fn get_original_position(&self) -> i32;
+    fn get_position(&self) -> i32;
 }
 
 impl Display for dyn InputToken {

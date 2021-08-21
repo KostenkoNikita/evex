@@ -1,6 +1,5 @@
 use crate::tokens::input_token::InputToken;
-use crate::errors::internal::parsing_errors::{BracketParsingError, InternalError};
-use crate::tokens::TokenConstructor;
+use crate::errors::internal::parsing_errors::{BracketParsingError};
 
 pub enum BracketType {
     Opening,
@@ -9,12 +8,12 @@ pub enum BracketType {
 
 pub struct BracketToken {
     content: String,
-    original_position: i32,
+    position: i32,
     bracket_type: BracketType,
 }
 
-impl TokenConstructor for BracketToken {
-    fn new(s: &str, original_position: i32) -> Result<BracketToken, BracketParsingError> {
+impl BracketToken {
+    pub fn new(s: &str, position: i32) -> Result<BracketToken, BracketParsingError> {
         let bracket_type = match s {
             "(" => BracketType::Opening,
             ")" => BracketType::Closing,
@@ -23,7 +22,7 @@ impl TokenConstructor for BracketToken {
 
         let result = BracketToken {
             content: String::from(s),
-            original_position,
+            position,
             bracket_type,
         };
 
@@ -36,7 +35,7 @@ impl InputToken for BracketToken {
         return &self.content;
     }
 
-    fn get_original_position(&self) -> i32 {
-        return self.original_position;
+    fn get_position(&self) -> i32 {
+        return self.position;
     }
 }

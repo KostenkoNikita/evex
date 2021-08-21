@@ -1,11 +1,11 @@
-use crate::errors::internal::parsing_errors::ValueStringParsingTokenError;
+use crate::errors::internal::parsing_errors::ValueStringParsingError;
 use std::num::ParseFloatError;
 use std::str::FromStr;
 
-pub trait Value {
+pub trait Value: Sized {
     fn get_as_string(&self) -> String;
 
-    fn from_string(s: &str) -> Result<Self, ValueStringParsingTokenError<ParseFloatError>>;
+    fn from_string(s: &str) -> Result<Self, ValueStringParsingError<ParseFloatError>> where Self: Sized;
 
     fn clone_value(&self) -> Self;
 }
@@ -17,11 +17,11 @@ impl Value for Number {
         return self.to_string();
     }
 
-    fn from_string(s: &str) -> Result<Number, ValueStringParsingTokenError<ParseFloatError>> {
+    fn from_string(s: &str) -> Result<Number, ValueStringParsingError<ParseFloatError>> {
         let result = <f64>::from_str(s);
         return match result {
             Ok(parsed_value) => Ok(parsed_value as Number),
-            Err(err) => ValueStringParsingTokenError::new(s, err),
+            Err(err) => Err(ValueStringParsingError::new(s, Some(err))),
         }
     }
 
